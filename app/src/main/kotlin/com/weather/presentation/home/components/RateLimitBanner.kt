@@ -16,9 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.weather.R
 
 /**
  * Banner laranja fixo exibido quando a API retorna HTTP 429 (rate limit).
@@ -31,8 +33,7 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun RateLimitBanner(secondsRemaining: Int, modifier: Modifier = Modifier) {
-    val descricaoAcessibilidade =
-        "Limite de requisições atingido. Tentando novamente em ${secondsRemaining} segundos"
+    val descricaoAcessibilidade = stringResource(R.string.label_rate_limit_banner, secondsRemaining)
 
     Surface(
         modifier = modifier
@@ -53,7 +54,7 @@ fun RateLimitBanner(secondsRemaining: Int, modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "Limite de requisições · Tentando novamente em ${secondsRemaining}s",
+                text = stringResource(R.string.label_rate_limit_banner, secondsRemaining),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFFF57F17),
                 modifier = Modifier.weight(1f)

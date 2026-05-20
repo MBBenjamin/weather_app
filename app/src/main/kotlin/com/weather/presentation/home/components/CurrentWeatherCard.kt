@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.weather.R
 import com.weather.domain.model.DadosAtuais
 import com.weather.presentation.theme.WeatherColors
 import com.weather.utils.WindDirectionMapper
@@ -105,15 +106,15 @@ fun CurrentWeatherCard(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             WeatherDataChip(
-                label = "Sensação",
+                label = stringResource(R.string.chip_feels_like),
                 value = "${atual.sensacaoTermicaC.roundToInt()}°C"
             )
             WeatherDataChip(
-                label = "Umidade",
+                label = stringResource(R.string.chip_humidity),
                 value = "${atual.umidadePercent}%"
             )
             WeatherDataChip(
-                label = "Vento",
+                label = stringResource(R.string.chip_wind),
                 value = "${atual.velocidadeVentoKmh.roundToInt()} km/h $direcaoCardinal"
             )
         }

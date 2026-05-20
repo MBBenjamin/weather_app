@@ -10,6 +10,7 @@
     <string name="error_rate_limit">Muitas requisições. Aguardando…</string>
     <string name="error_no_cache">Sem dados disponíveis. Verifique sua conexão.</string>
     <string name="error_invalid_location">Erro ao obter localização. Use busca manual.</string>
+    <string name="error_location_failed">Não foi possível obter a localização. Verifique o GPS e tente novamente.</string>
 
     <!-- Labels de UI -->
     <string name="label_refresh">Atualizar</string>
@@ -20,13 +21,14 @@
     <string name="label_offline">OFFLINE</string>
     <string name="label_location_approx">Localização aproximada · refinando…</string>
     <string name="label_open_settings">Abrir configurações</string>
+    <string name="label_grant_permission">Conceder permissão</string>
     <string name="label_today">HOJE</string>
     <string name="label_hourly_tab_chart">Gráfico</string>
     <string name="label_hourly_tab_list">Listagem</string>
     <string name="label_day_tab_hourly">Horário</string>
     <string name="label_day_tab_indices">Índices</string>
     <string name="label_search_history_empty">Nenhuma busca recente</string>
-    <string name="label_rate_limit_banner">Limite de requisições · Tentando em %ds</string>
+    <string name="label_rate_limit_banner">Limite de requisições · Tentando em %1$ds</string>
 
     <!-- Dados de clima — descrições WMO (PT-BR) -->
     <string name="weather_clear_sky">Céu limpo</string>
@@ -73,6 +75,23 @@
     <string name="a11y_navigate_next_day">Próximo dia</string>
     <string name="a11y_refresh_button">Atualizar previsão do tempo</string>
     <string name="a11y_search_button">Buscar cidade</string>
+
+    <!-- Permissão de localização -->
+    <string name="permission_location_denied_title">Permissão de localização necessária</string>
+    <string name="permission_location_denied_permanent_title">Permissão de localização negada permanentemente</string>
+    <string name="permission_location_rationale">O app precisa da sua localização para exibir a previsão do tempo.</string>
+
+    <!-- CurrentWeatherCard — chips de dados -->
+    <string name="chip_feels_like">Sensação</string>
+    <string name="chip_humidity">Umidade</string>
+    <string name="chip_wind">Vento</string>
+
+    <!-- DayDetailSheet — índices -->
+    <string name="index_humidity_max">Umidade máxima</string>
+    <string name="index_wind_max">Vento máximo</string>
+    <string name="index_wind_direction">Direção dominante</string>
+    <string name="index_rain_prob">Chuva</string>
+    <string name="day_detail_no_hourly">Dados horários não disponíveis.</string>
 
     <!-- Crédito de dados (RF-07 footer) -->
     <string name="data_credit">Dados: open-meteo.com</string>

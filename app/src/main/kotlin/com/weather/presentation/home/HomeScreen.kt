@@ -1,10 +1,15 @@
 package com.weather.presentation.home
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,8 +17,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -33,8 +42,12 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.weather.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.weather.domain.model.HoraDados
@@ -72,6 +85,11 @@ fun HomeScreen(
     var mostrarBusca by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
+
+    // Launcher para re-solicitar permissão de localização no estado SemPermissao
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { /* LocationHandlerImpl reage reativamente via observarLocalizacao() */ }
 
     // Observa cidade selecionada na busca → carrega previsão
     LaunchedEffect(Unit) {
@@ -121,15 +139,26 @@ fun HomeScreen(
 
                 is HomeUiState.Erro -> ErroContent(
                     state = state,
-                    onTentarNovamente = {
-                        viewModel.carregarPrevisao(0.0, 0.0, forceRefresh = true)
-                    },
+                    onTentarNovamente = { viewModel.tentarNovamente() },
                     onAbrirBusca = { mostrarBusca = true }
                 )
 
-                is HomeUiState.SemPermissao -> SemPermissaoContent(definitiva = false)
+                is HomeUiState.SemPermissao -> SemPermissaoContent(
+                    definitiva = false,
+                    onSolicitarPermissao = {
+                        permissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    }
+                )
 
-                is HomeUiState.SemPermissaoDefinitiva -> SemPermissaoContent(definitiva = true)
+                is HomeUiState.SemPermissaoDefinitiva -> SemPermissaoContent(
+                    definitiva = true,
+                    onSolicitarPermissao = {}
+                )
             }
 
             PullToRefreshContainer(
@@ -173,11 +202,25 @@ private fun SucessoContent(
     onAbrirBusca: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val searchDesc = stringResource(R.string.a11y_search_button)
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(
+                onClick = onAbrirBusca,
+                modifier = Modifier.semantics { contentDescription = searchDesc }
+            ) {
+                Icon(Icons.Default.Search, contentDescription = null)
+            }
+        }
         if (state.isLocalizacaoAproximada) {
             LocationBadge(
                 modifier = Modifier
@@ -204,6 +247,7 @@ private fun SucessoContent(
             HourlyForecastSection(
                 horas = horasDoDia,
                 onHoraSelecionada = onHoraSelecionada,
+                fusoHorario = state.previsao.fusoHorario,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -217,7 +261,7 @@ private fun SucessoContent(
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Dados: open-meteo.com",
+            text = stringResource(R.string.data_credit),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             textAlign = TextAlign.Center,
@@ -251,7 +295,7 @@ private fun ErroContent(
 }
 
 @Composable
-private fun SemPermissaoContent(definitiva: Boolean) {
+private fun SemPermissaoContent(definitiva: Boolean, onSolicitarPermissao: () -> Unit) {
     val context = LocalContext.current
     Column(
         modifier = Modifier
@@ -262,21 +306,21 @@ private fun SemPermissaoContent(definitiva: Boolean) {
         Spacer(Modifier.height(120.dp))
         Text(
             text = if (definitiva)
-                "Permissão de localização negada permanentemente"
+                stringResource(R.string.permission_location_denied_permanent_title)
             else
-                "Permissão de localização necessária",
+                stringResource(R.string.permission_location_denied_title),
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "O app precisa da sua localização para exibir a previsão do tempo.",
+            text = stringResource(R.string.permission_location_rationale),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
+        Spacer(Modifier.height(32.dp))
         if (definitiva) {
-            Spacer(Modifier.height(32.dp))
             Button(onClick = {
                 val intent = Intent(
                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -284,7 +328,11 @@ private fun SemPermissaoContent(definitiva: Boolean) {
                 )
                 context.startActivity(intent)
             }) {
-                Text("Abrir configurações")
+                Text(stringResource(R.string.label_open_settings))
+            }
+        } else {
+            Button(onClick = onSolicitarPermissao) {
+                Text(stringResource(R.string.label_grant_permission))
             }
         }
     }

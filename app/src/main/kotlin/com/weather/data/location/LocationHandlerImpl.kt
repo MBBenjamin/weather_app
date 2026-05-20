@@ -22,20 +22,23 @@ import kotlin.math.sqrt
  * 1. Verifica permissões — emite [LocationResult.PermissionDenied] se ausentes.
  * 2. Obtém `lastLocation` (tipicamente Network, rápido) → emite [LocationResult.Success]
  *    com `isApproximate=true`.
- * 3. Em background refina com GPS (timeout [gpsTimeoutMs]). Se delta > 100m emite
+ * 3. Em background refina com GPS (timeout [GPS_TIMEOUT_MS]). Se delta > 100m emite
  *    [LocationResult.GpsRefinement]. Timeout silencioso — sem erro para o usuário.
- * 4. Se `lastLocation` for null, tenta `getCurrentLocation` com timeout [currentLocTimeoutMs].
+ * 4. Se `lastLocation` for null, tenta `getCurrentLocation` com timeout [CURRENT_LOC_TIMEOUT_MS].
  *    Falha → emite [LocationResult.LocationFailed].
- *
- * @param gpsTimeoutMs timeout do refinamento GPS em ms (padrão 30s)
- * @param currentLocTimeoutMs timeout do fallback getCurrentLocation em ms (padrão 5s)
  */
 class LocationHandlerImpl @Inject constructor(
     internal val locationSource: ILocationSource,
     @ApplicationContext private val context: Context,
-    internal val gpsTimeoutMs: Long = 30_000L,
-    internal val currentLocTimeoutMs: Long = 5_000L
 ) : ILocationHandler {
+
+    private val gpsTimeoutMs: Long = GPS_TIMEOUT_MS
+    private val currentLocTimeoutMs: Long = CURRENT_LOC_TIMEOUT_MS
+
+    companion object {
+        const val GPS_TIMEOUT_MS = 30_000L
+        const val CURRENT_LOC_TIMEOUT_MS = 5_000L
+    }
 
     override fun observarLocalizacao(): Flow<LocationResult> = flow {
         if (!hasPermission()) {

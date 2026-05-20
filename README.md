@@ -6,14 +6,14 @@ Um aplicativo Android de previsão do tempo — rápido, simples e que funciona 
 
 ## O que é
 
-Clima Agora é um app para quem quer saber a previsão do tempo sem complicação. Abre rápido, mostra o que importa, e não fica pedindo permissões desnecessárias nem gastando bateria.
+Clima Agora é um app para quem quer saber a previsão do tempo sem complicação. Abre rápido, mostra o que importa, e não pede permissões desnecessárias nem gasta bateria.
 
 ## O que ele faz
 
 - Mostra as condições atuais da sua localização assim que você abre o app
 - Exibe a previsão hora a hora para as próximas 24 horas, em gráfico ou lista
 - Apresenta a previsão dos próximos 7 dias em cards claros e diretos
-- Detecta sua localização automaticamente, sem precisar digitar nada
+- Detecta a sua localização automaticamente, sem precisar digitar nada
 - Permite buscar qualquer cidade do mundo pelo nome
 - Funciona offline com os dados mais recentes em cache
 
@@ -25,12 +25,12 @@ O app foi pensado para quem consulta a previsão do tempo rapidamente antes de s
 
 ## Pré-requisitos
 
-| Ferramenta | Versão mínima |
-|------------|---------------|
-| Android Studio | Ladybug 2024.1+ |
-| Android SDK | API 24 (min) → API 34 (target) |
-| JDK | 17 (incluído no Android Studio) |
-| Git | 2.40+ |
+| Ferramenta     | Versão mínima                   |
+|----------------|---------------------------------|
+| Android Studio | Ladybug 2024.1+                 |
+| Android SDK    | API 24 (min) → API 34 (target)  |
+| JDK            | 17 (incluído no Android Studio) |
+| Git            | 2.40+                           |
 
 ## Setup
 

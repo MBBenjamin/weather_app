@@ -44,6 +44,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -71,6 +72,13 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core-ktx:1.13.1")
+        force("androidx.core:core:1.13.1")
     }
 }
 
@@ -138,6 +146,9 @@ dependencies {
 
     // Navigation Compose
     implementation(libs.navigation.compose)
+
+    // Core library desugaring — backport java.time para minSdk 24
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // LeakCanary — detecção de memory leaks (debug only — habilitado automaticamente)
     debugImplementation(libs.leakcanary)

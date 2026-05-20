@@ -1,5 +1,6 @@
 package com.weather.presentation.home
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
@@ -44,6 +45,7 @@ import kotlin.math.sqrt
  * O ticker de timestamp atualiza [HomeUiState.Sucesso.timestampRelativo] a cada minuto
  * sem disparar novas chamadas à API.
  */
+@SuppressLint("StaticFieldLeak") // @ApplicationContext é ApplicationContext — sem leak de Activity/Fragment
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val previsaoRepository: IPrevisaoRepository,
@@ -199,6 +201,11 @@ class HomeViewModel @Inject constructor(
         carregarPrevisao(ultimaLat, ultimaLon, ultimoNome, forceRefresh = true)
     }
 
+    /** Tenta recarregar a previsão usando a última localização conhecida (chamado pelo botão de erro). */
+    fun tentarNovamente() {
+        carregarPrevisao(ultimaLat, ultimaLon, ultimoNome, forceRefresh = true)
+    }
+
     /**
      * Chamada ao reconectar à internet — recarrega dados se o cache estiver expirado
      * ou se o estado atual for de erro (sem cache disponível).
@@ -252,7 +259,7 @@ class HomeViewModel @Inject constructor(
             }
             is LocationResult.LocationFailed -> {
                 _uiState.value = HomeUiState.Erro(
-                    mensagem = "Não foi possível obter a localização. Verifique o GPS e tente novamente.",
+                    mensagem = context.getString(com.weather.R.string.error_location_failed),
                     temCache = false
                 )
             }

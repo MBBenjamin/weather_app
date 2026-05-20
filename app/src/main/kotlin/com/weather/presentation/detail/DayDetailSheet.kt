@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.weather.R
 import com.weather.domain.model.DiaDados
 import com.weather.domain.model.HoraDados
 import com.weather.presentation.home.HomeUiState
@@ -176,7 +177,10 @@ private fun DayDetailTabs(
     horas: List<HoraDados>
 ) {
     var abaAtiva by remember { mutableIntStateOf(0) }
-    val abas = listOf("Horário", "Índices")
+    val abas = listOf(
+        stringResource(R.string.label_day_tab_hourly),
+        stringResource(R.string.label_day_tab_indices)
+    )
 
     TabRow(selectedTabIndex = abaAtiva) {
         abas.forEachIndexed { index, titulo ->
@@ -200,7 +204,7 @@ private fun DayDetailTabs(
 private fun AbaHorario(horas: List<HoraDados>) {
     if (horas.isEmpty()) {
         Text(
-            text = "Dados horários não disponíveis.",
+            text = stringResource(R.string.day_detail_no_hourly),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             modifier = Modifier.padding(16.dp)
@@ -228,30 +232,34 @@ private fun AbaHorario(horas: List<HoraDados>) {
 @Composable
 private fun AbaIndices(dia: DiaDados) {
     val cardinal = WindDirectionMapper.paraCardinal(dia.direcaoDominanteVentoGraus)
+    val labelUmidade = stringResource(R.string.index_humidity_max)
+    val labelVento = stringResource(R.string.index_wind_max)
+    val labelDirecao = stringResource(R.string.index_wind_direction)
+    val labelChuva = stringResource(R.string.index_rain_prob)
 
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         IndiceCard(
-            label = "Umidade máxima",
+            label = labelUmidade,
             value = "${dia.umidadeMaxPercent}%",
-            desc = "Umidade máxima: ${dia.umidadeMaxPercent}%"
+            desc = "$labelUmidade: ${dia.umidadeMaxPercent}%"
         )
         IndiceCard(
-            label = "Vento máximo",
+            label = labelVento,
             value = "${"%.1f".format(dia.velocidadeMaxVentoKmh)} km/h",
-            desc = "Vento máximo: ${"%.1f".format(dia.velocidadeMaxVentoKmh)} km/h"
+            desc = "$labelVento: ${"%.1f".format(dia.velocidadeMaxVentoKmh)} km/h"
         )
         IndiceCard(
-            label = "Direção dominante",
+            label = labelDirecao,
             value = "$cardinal (${dia.direcaoDominanteVentoGraus}°)",
-            desc = "Direção dominante do vento: $cardinal, ${dia.direcaoDominanteVentoGraus} graus"
+            desc = "$labelDirecao: $cardinal, ${dia.direcaoDominanteVentoGraus} graus"
         )
         IndiceCard(
-            label = "Chuva",
+            label = labelChuva,
             value = "${dia.probChuvaPercent}%",
-            desc = "Probabilidade de chuva: ${dia.probChuvaPercent}%"
+            desc = "$labelChuva: ${dia.probChuvaPercent}%"
         )
     }
 }
@@ -260,7 +268,7 @@ private fun AbaIndices(dia: DiaDados) {
 private fun IndiceCard(label: String, value: String, desc: String) {
     Card(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .semantics { contentDescription = desc },
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {

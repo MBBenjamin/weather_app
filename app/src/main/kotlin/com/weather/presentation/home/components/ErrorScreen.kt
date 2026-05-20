@@ -42,8 +42,8 @@ fun ErrorScreen(
     mensagem: String,
     onTentarNovamente: () -> Unit,
     onBuscarOutraCidade: () -> Unit,
-    tentarNovamenteHabilitado: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tentarNovamenteHabilitado: Boolean = true
 ) {
     Column(
         modifier = modifier

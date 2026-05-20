@@ -7,7 +7,8 @@
       "Bash(powershell -NonInteractive -Command \"& '.specify/scripts/powershell/check-prerequisites.ps1' -Json -RequireTasks -IncludeTasks\")",
       "Bash(powershell.exe -NonInteractive -Command \".specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks\")",
       "Bash(New-Item -ItemType File -Path \"c:\\\\Users\\\\marce\\\\Documents\\\\Projetos\\\\weather_app\\\\CONTRIBUTING.md\" -Force)",
-      "Bash(Out-Null)"
+      "Bash(Out-Null)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\marce\\\\Documents\\\\Projetos\\\\weather_app\"; .\\\\gradlew.bat :app:tasks --no-configuration-cache 2>&1 | Where-Object { $_ -match \"lint|detekt|check\" })"
     ]
   }
 }

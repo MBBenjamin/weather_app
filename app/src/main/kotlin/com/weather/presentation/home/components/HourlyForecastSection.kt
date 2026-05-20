@@ -58,10 +58,14 @@ import kotlin.math.roundToInt
 fun HourlyForecastSection(
     horas: List<HoraDados>,
     onHoraSelecionada: (HoraDados) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fusoHorario: String = "UTC"
 ) {
     var abaAtiva by remember { mutableIntStateOf(0) }
-    val abas = listOf("Gráfico", "Listagem")
+    val abas = listOf(
+        stringResource(com.weather.R.string.label_hourly_tab_chart),
+        stringResource(com.weather.R.string.label_hourly_tab_list)
+    )
 
     Column(modifier = modifier.fillMaxWidth()) {
         TabRow(selectedTabIndex = abaAtiva) {
@@ -75,19 +79,20 @@ fun HourlyForecastSection(
         }
 
         when (abaAtiva) {
-            0 -> GraficoHorario(horas = horas, modifier = Modifier.fillMaxWidth())
-            1 -> ListagemHoraria(horas = horas, onHoraSelecionada = onHoraSelecionada)
+            0 -> GraficoHorario(horas = horas, fusoHorario = fusoHorario, modifier = Modifier.fillMaxWidth())
+            1 -> ListagemHoraria(horas = horas, fusoHorario = fusoHorario, onHoraSelecionada = onHoraSelecionada)
         }
     }
 }
 
 @Composable
-private fun GraficoHorario(horas: List<HoraDados>, modifier: Modifier = Modifier) {
+private fun GraficoHorario(horas: List<HoraDados>, fusoHorario: String, modifier: Modifier = Modifier) {
     val modelProducer = remember { CartesianChartModelProducer.build() }
 
-    // Índice da hora atual para scroll e marcador
-    val horaAtualIndex = remember(horas) {
-        val horaAtual = LocalTime.now().hour
+    // Índice da hora atual — usa o fuso da localidade, não o do dispositivo
+    val horaAtualIndex = remember(horas, fusoHorario) {
+        val fuso = try { java.time.ZoneId.of(fusoHorario) } catch (_: Exception) { java.time.ZoneId.of("UTC") }
+        val horaAtual = LocalTime.now(fuso).hour
         horas.indexOfFirst { it.hora.startsWith(horaAtual.toString().padStart(2, '0')) }
             .takeIf { it >= 0 } ?: 0
     }
@@ -107,7 +112,7 @@ private fun GraficoHorario(horas: List<HoraDados>, modifier: Modifier = Modifier
                 rememberLineCartesianLayer(),
                 rememberColumnCartesianLayer(),
                 startAxis = rememberStartAxis(),
-                bottomAxis = rememberBottomAxis()
+                bottomAxis = rememberBottomAxis(),
             ),
             modelProducer = modelProducer,
             modifier = modifier
@@ -120,13 +125,15 @@ private fun GraficoHorario(horas: List<HoraDados>, modifier: Modifier = Modifier
 @Composable
 private fun ListagemHoraria(
     horas: List<HoraDados>,
+    fusoHorario: String,
     onHoraSelecionada: (HoraDados) -> Unit
 ) {
     val listState: LazyListState = rememberLazyListState()
 
-    // Scroll automático para a hora atual
-    val horaAtualIndex = remember(horas) {
-        val horaAtual = LocalTime.now().hour
+    // Scroll automático — usa o fuso da localidade, não o do dispositivo
+    val horaAtualIndex = remember(horas, fusoHorario) {
+        val fuso = try { java.time.ZoneId.of(fusoHorario) } catch (_: Exception) { java.time.ZoneId.of("UTC") }
+        val horaAtual = LocalTime.now(fuso).hour
         horas.indexOfFirst { it.hora.startsWith(horaAtual.toString().padStart(2, '0')) }
             .takeIf { it >= 0 } ?: 0
     }
