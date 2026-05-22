@@ -36,17 +36,36 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberEndAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
+import com.patrykandpatrick.vico.core.cartesian.axis.AxisPosition
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
+import com.patrykandpatrick.vico.core.cartesian.Scroll
+import com.patrykandpatrick.vico.core.cartesian.data.AxisValueOverrider
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.weather.domain.model.HoraDados
 import com.weather.utils.WmoMapper
 import java.time.LocalTime
+import java.time.ZoneId
 import kotlin.math.roundToInt
+
+private fun horaAtualIndex(horas: List<HoraDados>, fusoHorario: String): Int {
+    val fuso = try { ZoneId.of(fusoHorario) } catch (_: Exception) { ZoneId.of("UTC") }
+    val horaAtual = LocalTime.now(fuso).hour
+    return horas.indexOfFirst { it.hora.startsWith(horaAtual.toString().padStart(2, '0')) }
+        .takeIf { it >= 0 } ?: 0
+}
+
+private fun fixedRangeOverrider(min: Float, max: Float) = object : AxisValueOverrider {
+    override fun getMinY(minY: Float, maxY: Float, extraStore: ExtraStore) = min
+    override fun getMaxY(minY: Float, maxY: Float, extraStore: ExtraStore) = max
+}
 
 /**
  * Seção de previsão horária com duas abas: gráfico Vico e listagem de cards.
@@ -89,16 +108,26 @@ fun HourlyForecastSection(
 private fun GraficoHorario(horas: List<HoraDados>, fusoHorario: String, modifier: Modifier = Modifier) {
     val modelProducer = remember { CartesianChartModelProducer.build() }
 
-    // Índice da hora atual — usa o fuso da localidade, não o do dispositivo
-    val horaAtualIndex = remember(horas, fusoHorario) {
-        val fuso = try { java.time.ZoneId.of(fusoHorario) } catch (_: Exception) { java.time.ZoneId.of("UTC") }
-        val horaAtual = LocalTime.now(fuso).hour
-        horas.indexOfFirst { it.hora.startsWith(horaAtual.toString().padStart(2, '0')) }
-            .takeIf { it >= 0 } ?: 0
+    val currentHourIndex = remember(horas, fusoHorario) { horaAtualIndex(horas, fusoHorario) }
+
+    val axisValueOverrider = remember(horas) {
+        val minTemp = (horas.minOfOrNull { it.temperaturaC } ?: 0f).toInt() - 5
+        val maxTemp = (horas.maxOfOrNull { it.temperaturaC } ?: 0f).toInt() + 5
+        fixedRangeOverrider(minTemp.toFloat(), maxTemp.toFloat())
     }
+
+    val precipValueOverrider = remember(horas) {
+        val maxPrecip = (horas.maxOfOrNull { it.precipitacaoMm } ?: 0f).toInt() + 1
+        fixedRangeOverrider(0f, maxPrecip.toFloat())
+    }
+
+    val scrollState = rememberVicoScrollState(
+        initialScroll = Scroll.Absolute.x(currentHourIndex.toFloat())
+    )
 
     LaunchedEffect(horas) {
         if (horas.isNotEmpty()) {
+            @Suppress("DeferredResultUnused")
             modelProducer.runTransaction {
                 lineSeries { series(horas.map { it.temperaturaC }) }
                 columnSeries { series(horas.map { it.precipitacaoMm.coerceAtLeast(0f) }) }
@@ -109,12 +138,20 @@ private fun GraficoHorario(horas: List<HoraDados>, fusoHorario: String, modifier
     if (horas.isNotEmpty()) {
         CartesianChartHost(
             chart = rememberCartesianChart(
-                rememberLineCartesianLayer(),
-                rememberColumnCartesianLayer(),
+                rememberLineCartesianLayer(
+                    axisValueOverrider = axisValueOverrider,
+                    verticalAxisPosition = AxisPosition.Vertical.Start,
+                ),
+                rememberColumnCartesianLayer(
+                    axisValueOverrider = precipValueOverrider,
+                    verticalAxisPosition = AxisPosition.Vertical.End,
+                ),
                 startAxis = rememberStartAxis(),
+                endAxis = rememberEndAxis(),
                 bottomAxis = rememberBottomAxis(),
             ),
             modelProducer = modelProducer,
+            scrollState = scrollState,
             modifier = modifier
                 .height(220.dp)
                 .padding(horizontal = 8.dp, vertical = 8.dp)
@@ -129,14 +166,7 @@ private fun ListagemHoraria(
     onHoraSelecionada: (HoraDados) -> Unit
 ) {
     val listState: LazyListState = rememberLazyListState()
-
-    // Scroll automático — usa o fuso da localidade, não o do dispositivo
-    val horaAtualIndex = remember(horas, fusoHorario) {
-        val fuso = try { java.time.ZoneId.of(fusoHorario) } catch (_: Exception) { java.time.ZoneId.of("UTC") }
-        val horaAtual = LocalTime.now(fuso).hour
-        horas.indexOfFirst { it.hora.startsWith(horaAtual.toString().padStart(2, '0')) }
-            .takeIf { it >= 0 } ?: 0
-    }
+    val horaAtualIndex = remember(horas, fusoHorario) { horaAtualIndex(horas, fusoHorario) }
 
     LaunchedEffect(horaAtualIndex) {
         if (horas.isNotEmpty()) {
@@ -158,7 +188,7 @@ private fun ListagemHoraria(
 /**
  * Card individual de previsão horária.
  *
- * Usado na aba "Listagem" do [HourlyForecastSection] e reutilizado no [HourDetailSheet].
+ * Usado na aba "Listagem" do [HourlyForecastSection] e no detalhe horário.
  */
 @Composable
 fun HourCard(

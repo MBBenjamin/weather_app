@@ -25,8 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -69,37 +67,35 @@ import com.weather.presentation.search.SearchViewModel
  *
  * Gerencia pull-to-refresh com feedback háptico, coleta o [HomeUiState] do
  * [HomeViewModel] e distribui para os composables filhos conforme o estado.
- * Erros transitórios são exibidos via [SnackbarHost] (nunca Toast).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    searchViewModel: SearchViewModel = hiltViewModel(),
-    onAbrirBusca: () -> Unit = {}
+    searchViewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val horasDoDia by viewModel.horasDoDia.collectAsStateWithLifecycle()
     var horaSelecionada by remember { mutableStateOf<HoraDados?>(null) }
     var mostrarDayDetail by remember { mutableStateOf(false) }
     var mostrarBusca by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
 
-    // Launcher para re-solicitar permissão de localização no estado SemPermissao
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* LocationHandlerImpl reage reativamente via observarLocalizacao() */ }
+    ) { permissions ->
+        if (permissions.values.any { it }) {
+            viewModel.verificarLocalizacao()
+        }
+    }
 
-    // Observa cidade selecionada na busca → carrega previsão
     LaunchedEffect(Unit) {
         searchViewModel.cidadeSelecionadaEvent.collect { cidade ->
-            viewModel.carregarPrevisao(cidade.latitude, cidade.longitude, cidade.nome)
+            viewModel.selecionarCidade(cidade.latitude, cidade.longitude, cidade.nome)
         }
     }
     val pullRefreshState = rememberPullToRefreshState()
 
-    // Inicia o refresh quando o usuário puxa para baixo
     if (pullRefreshState.isRefreshing) {
         LaunchedEffect(Unit) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -107,16 +103,13 @@ fun HomeScreen(
         }
     }
 
-    // Encerra o indicador de refresh quando o estado não é mais Carregando
     LaunchedEffect(uiState) {
         if (uiState !is HomeUiState.Carregando && pullRefreshState.isRefreshing) {
             pullRefreshState.endRefresh()
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -168,7 +161,6 @@ fun HomeScreen(
         }
     }
 
-    // Bottom sheet de detalhe por hora
     horaSelecionada?.let { hora ->
         HourDetailSheet(
             hora = hora,
@@ -176,7 +168,6 @@ fun HomeScreen(
         )
     }
 
-    // Bottom sheet de detalhe por dia
     if (mostrarDayDetail) {
         DayDetailSheet(
             viewModel = viewModel,
@@ -184,7 +175,6 @@ fun HomeScreen(
         )
     }
 
-    // Bottom sheet de busca de cidades
     if (mostrarBusca) {
         SearchSheet(
             viewModel = searchViewModel,
@@ -240,6 +230,7 @@ private fun SucessoContent(
             nomeLocalidade = state.nomeLocalidade,
             atual = state.previsao.atual,
             timestampRelativo = state.timestampRelativo,
+            fusoHorario = state.previsao.fusoHorario,
             modifier = Modifier.fillMaxWidth()
         )
         if (horasDoDia.isNotEmpty()) {

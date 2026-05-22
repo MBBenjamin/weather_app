@@ -59,9 +59,8 @@ fun SearchSheet(
     val focusManager = LocalFocusManager.current
 
     var query by remember { mutableStateOf("") }
-    var searchActive by remember { mutableStateOf(false) }
+    var searchActive by remember { mutableStateOf(true) }
 
-    // Carrega histórico ao abrir o sheet
     LaunchedEffect(Unit) {
         viewModel.carregarHistorico()
     }
@@ -93,7 +92,6 @@ fun SearchSheet(
                     .fillMaxWidth()
                     .semantics { contentDescription = "Campo de busca de cidade" }
             ) {
-                // Conteúdo interno do SearchBar expandido
                 SearchContent(
                     uiState = uiState,
                     onCidadeSelecionada = { cidade ->

@@ -3,21 +3,14 @@ package com.weather.screenshots
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.weather.domain.model.DadosAtuais
-import com.weather.domain.model.DadosDiarios
-import com.weather.domain.model.DadosHorarios
-import com.weather.domain.model.DiaDados
-import com.weather.domain.model.HoraDados
-import com.weather.domain.model.Previsao
-import com.weather.presentation.home.HomeUiState
 import com.weather.presentation.home.components.CurrentWeatherCard
 import com.weather.presentation.home.components.OfflineBadge
-import com.weather.presentation.home.components.WeeklyForecastList
 import com.weather.presentation.theme.WeatherTheme
 import org.junit.Rule
 import org.junit.Test
 
 /**
- * Screenshots de regressão visual da [HomeScreen] via Paparazzi.
+ * Screenshots de regressão visual dos componentes principais via Paparazzi.
  *
  * Executar: `./gradlew recordPaparazziDebug` (grava baseline)
  *           `./gradlew verifyPaparazziDebug` (verifica regressões)
@@ -33,7 +26,7 @@ class HomeScreenScreenshots {
     @Test
     fun portrait_light_theme() {
         paparazzi.snapshot {
-            WeatherTheme(darkTheme = false) {
+            WeatherTheme {
                 CurrentWeatherCard(
                     nomeLocalidade = "São Paulo, SP",
                     atual = fakeDadosAtuais(),
@@ -46,7 +39,7 @@ class HomeScreenScreenshots {
     @Test
     fun portrait_offline_state() {
         paparazzi.snapshot {
-            WeatherTheme(darkTheme = false) {
+            WeatherTheme {
                 androidx.compose.foundation.layout.Column {
                     OfflineBadge(horasAtraso = 3)
                     CurrentWeatherCard(

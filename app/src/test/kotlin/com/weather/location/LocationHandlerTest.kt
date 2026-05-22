@@ -12,7 +12,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,9 +50,10 @@ class LocationHandlerTest {
         locationHandler = LocationHandlerImpl(
             locationSource = locationSource,
             context = context,
-            gpsTimeoutMs = 200L,
-            currentLocTimeoutMs = 200L
-        )
+        ).also {
+            it.gpsTimeoutMs = 200L
+            it.currentLocTimeoutMs = 200L
+        }
     }
 
     @Test

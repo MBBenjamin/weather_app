@@ -8,7 +8,19 @@
       "Bash(powershell.exe -NonInteractive -Command \".specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks\")",
       "Bash(New-Item -ItemType File -Path \"c:\\\\Users\\\\marce\\\\Documents\\\\Projetos\\\\weather_app\\\\CONTRIBUTING.md\" -Force)",
       "Bash(Out-Null)",
-      "PowerShell(Set-Location \"C:\\\\Users\\\\marce\\\\Documents\\\\Projetos\\\\weather_app\"; .\\\\gradlew.bat :app:tasks --no-configuration-cache 2>&1 | Where-Object { $_ -match \"lint|detekt|check\" })"
+      "PowerShell(Set-Location \"C:\\\\Users\\\\marce\\\\Documents\\\\Projetos\\\\weather_app\"; .\\\\gradlew.bat :app:tasks --no-configuration-cache 2>&1 | Where-Object { $_ -match \"lint|detekt|check\" })",
+      "Bash(./gradlew :app:testDebugUnitTest)",
+      "Bash(./gradlew :app:testDebugUnitTest --tests \"com.weather.utils.WmoMapperTest\")",
+      "Bash(./gradlew :app:testDebugUnitTest --tests \"com.weather.repository.*\" --tests \"com.weather.home.*\" --tests \"com.weather.location.*\" --tests \"com.weather.search.*\" --tests \"com.weather.worker.*\" --tests \"com.weather.utils.*\")",
+      "Bash(./gradlew :app:testDebugUnitTest --tests \"com.weather.home.HomeViewModelTest\")",
+      "Bash(tasklist)",
+      "Bash(./gradlew :app:testDebugUnitTest --tests \"com.weather.home.HomeViewModelTest\" --tests \"com.weather.repository.*\" --tests \"com.weather.location.*\" --tests \"com.weather.search.*\" --tests \"com.weather.worker.*\" --tests \"com.weather.utils.*\")",
+      "Bash(adb logcat *)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d -s AndroidRuntime:E 2>&1 | Select-Object -Last 80)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d -s \"WeatherApp,AndroidRuntime,ActivityManager,PermissionController\" 2>&1 | Select-Object -Last 100)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d 2>&1 | Select-String \"com.weather\" | Select-Object -Last 100)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\marce\\\\Documents\\\\Projetos\\\\weather_app\" -Recurse -Filter \"*ViewModel.kt\")",
+      "Bash(Select-Object -First 5)"
     ]
   }
 }

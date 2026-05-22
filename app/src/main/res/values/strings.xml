@@ -25,6 +25,7 @@
     <string name="label_today">HOJE</string>
     <string name="label_hourly_tab_chart">Gráfico</string>
     <string name="label_hourly_tab_list">Listagem</string>
+    <string name="label_weekly_forecast">Previsão 7 dias</string>
     <string name="label_day_tab_hourly">Horário</string>
     <string name="label_day_tab_indices">Índices</string>
     <string name="label_search_history_empty">Nenhuma busca recente</string>

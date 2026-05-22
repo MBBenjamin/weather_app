@@ -3,7 +3,6 @@ package com.weather.home
 import android.content.Context
 import android.content.SharedPreferences
 import com.weather.domain.location.ILocationHandler
-import com.weather.domain.location.LocationResult
 import com.weather.domain.model.DadosAtuais
 import com.weather.domain.model.DadosDiarios
 import com.weather.domain.model.DadosHorarios
@@ -63,7 +62,7 @@ class HomeViewModelTest {
         context = mockk(relaxed = true)
         sharedPrefs = mockk(relaxed = true)
         every { networkMonitor.isOnline } returns isOnlineFlow
-        every { context.getSharedPreferences(any(), any()) } returns sharedPrefs
+        every { context.getSharedPreferences(any<String>(), any()) } returns sharedPrefs
         every { sharedPrefs.getInt("denial_count", 0) } returns 0
         // locationHandler.observarLocalizacao() retorna flow vazio por padrão nos testes existentes
         every { locationHandler.observarLocalizacao() } returns flowOf()

@@ -6,7 +6,6 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.weather.data.worker.LimpezaCacheWorker
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -32,7 +31,6 @@ class WeatherApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         initLogging()
-        initCrashlytics()
         agendarLimpezaCache()
     }
 
@@ -41,15 +39,6 @@ class WeatherApplication : Application(), Configuration.Provider {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-    }
-
-    /**
-     * Desabilita coleta de crashes em debug para não poluir o console do Firebase.
-     * Em release, crashes são enviados automaticamente ao Firebase Crashlytics.
-     */
-    private fun initCrashlytics() {
-        FirebaseCrashlytics.getInstance()
-            .setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
     }
 
     /**

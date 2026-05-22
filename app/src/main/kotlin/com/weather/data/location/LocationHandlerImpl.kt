@@ -32,8 +32,8 @@ class LocationHandlerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ILocationHandler {
 
-    private val gpsTimeoutMs: Long = GPS_TIMEOUT_MS
-    private val currentLocTimeoutMs: Long = CURRENT_LOC_TIMEOUT_MS
+    internal var gpsTimeoutMs: Long = GPS_TIMEOUT_MS
+    internal var currentLocTimeoutMs: Long = CURRENT_LOC_TIMEOUT_MS
 
     companion object {
         const val GPS_TIMEOUT_MS = 30_000L

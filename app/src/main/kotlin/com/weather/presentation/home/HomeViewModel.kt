@@ -3,6 +3,8 @@ package com.weather.presentation.home
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.location.Geocoder
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.weather.data.remote.RateLimitException
@@ -16,6 +18,8 @@ import com.weather.utils.DateFormatter
 import com.weather.utils.NetworkMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,8 +33,10 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -60,7 +66,7 @@ class HomeViewModel @Inject constructor(
 
     private var denialCount: Int
         get() = locationPrefs.getInt("denial_count", 0)
-        set(value) = locationPrefs.edit().putInt("denial_count", value).apply()
+        set(value) = locationPrefs.edit { putInt("denial_count", value) }
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Carregando)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -86,7 +92,7 @@ class HomeViewModel @Inject constructor(
     val diaSelecionadoIndex: StateFlow<Int> = _diaSelecionadoIndex.asStateFlow()
 
     /**
-     * Horas do dia selecionado pelo usuário no [DayDetailSheet], filtradas
+     * Horas do dia selecionado pelo usuário no detalhe diário, filtradas
      * a partir do [uiState] e do [diaSelecionadoIndex] atual.
      */
     @Suppress("OPT_IN_USAGE")
@@ -101,9 +107,14 @@ class HomeViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
 
+    private val geocoder by lazy { Geocoder(context, Locale.getDefault()) }
+    private val geocodeCache = HashMap<String, String>()
+
     private var ultimaLat: Double = 0.0
     private var ultimaLon: Double = 0.0
     private var ultimoNome: String = ""
+
+    private var locationJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -112,7 +123,7 @@ class HomeViewModel @Inject constructor(
                 atualizarTimestamp()
             }
         }
-        viewModelScope.launch {
+        locationJob = viewModelScope.launch {
             locationHandler.observarLocalizacao().collect { result ->
                 processarResultadoLocalizacao(result)
             }
@@ -182,7 +193,7 @@ class HomeViewModel @Inject constructor(
     fun filtrarHorasDoDia(horas: List<HoraDados>, dataIso: String): List<HoraDados> =
         horas.filter { it.dataIso == dataIso }
 
-    /** Define o índice do dia selecionado para exibição no [DayDetailSheet]. */
+    /** Define o índice do dia selecionado para exibição no detalhe diário. */
     fun abrirDia(index: Int) {
         _diaSelecionadoIndex.value = index
     }
@@ -196,13 +207,30 @@ class HomeViewModel @Inject constructor(
         _diaSelecionadoIndex.value = (_diaSelecionadoIndex.value + delta).coerceIn(0, 6)
     }
 
+    /** Re-executa a observação de localização após permissão concedida. */
+    fun verificarLocalizacao() {
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
+            locationHandler.observarLocalizacao().collect { result ->
+                processarResultadoLocalizacao(result)
+            }
+        }
+    }
+
     /** Dispara refresh forçado ignorando o cache de 1h (chamado pelo pull-to-refresh). */
     fun onPullToRefresh() {
         carregarPrevisao(ultimaLat, ultimaLon, ultimoNome, forceRefresh = true)
     }
 
+    /** Carrega previsão para cidade selecionada na busca, exibindo loading imediatamente. */
+    fun selecionarCidade(lat: Double, lon: Double, nome: String) {
+        _uiState.value = HomeUiState.Carregando
+        carregarPrevisao(lat, lon, nome)
+    }
+
     /** Tenta recarregar a previsão usando a última localização conhecida (chamado pelo botão de erro). */
     fun tentarNovamente() {
+        _uiState.value = HomeUiState.Carregando
         carregarPrevisao(ultimaLat, ultimaLon, ultimoNome, forceRefresh = true)
     }
 
@@ -225,7 +253,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun processarResultadoLocalizacao(result: LocationResult) {
+    private suspend fun processarResultadoLocalizacao(result: LocationResult) {
         when (result) {
             is LocationResult.Success -> {
                 // Reseta contador ao conceder permissão
@@ -236,7 +264,8 @@ class HomeViewModel @Inject constructor(
                     // Atualiza badge de localização aproximada sem recarregar dados
                     _uiState.value = state.copy(isLocalizacaoAproximada = isApprox)
                 }
-                carregarPrevisao(result.lat, result.lon)
+                val nome = reverseGeocode(result.lat, result.lon)
+                carregarPrevisao(result.lat, result.lon, nome)
             }
             is LocationResult.GpsRefinement -> {
                 val state = _uiState.value
@@ -266,6 +295,22 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
+    private suspend fun reverseGeocode(lat: Double, lon: Double): String {
+        val key = "%.3f,%.3f".format(lat, lon)
+        geocodeCache[key]?.let { return it }
+        return withContext(Dispatchers.IO) {
+            try {
+                geocoder.getFromLocation(lat, lon, 1)
+                    ?.firstOrNull()
+                    ?.let { it.locality ?: it.subAdminArea ?: it.adminArea }
+                    ?: ""
+            } catch (_: Exception) {
+                ""
+            }
+        }.also { geocodeCache[key] = it }
+    }
+
     /** Distância aproximada em metros entre dois pontos geográficos (Haversine). */
     private fun haversineMetros(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val r = 6_371_000.0
@@ -278,11 +323,10 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun atualizarTimestamp() {
-        val state = _uiState.value
-        if (state is HomeUiState.Sucesso) {
-            _uiState.value = state.copy(
-                timestampRelativo = DateFormatter.formatarTimestampRelativo(state.previsao.timestampAtualizado)
-            )
+        val state = _uiState.value as? HomeUiState.Sucesso ?: return
+        val novo = DateFormatter.formatarTimestampRelativo(state.previsao.timestampAtualizado)
+        if (novo != state.timestampRelativo) {
+            _uiState.value = state.copy(timestampRelativo = novo)
         }
     }
 

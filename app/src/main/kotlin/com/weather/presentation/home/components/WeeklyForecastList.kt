@@ -50,6 +50,12 @@ fun WeeklyForecastList(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        Text(
+            text = stringResource(R.string.label_weekly_forecast),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
         dias.forEachIndexed { index, dia ->
             DayCard(
                 dia = dia,
@@ -77,7 +83,7 @@ fun DayCard(
 ) {
     val descricaoWmo = stringResource(WmoMapper.descricaoWMO(dia.codigoWMO))
     val desc = "${if (dia.eHoje) "Hoje, " else ""}${dia.data}, $descricaoWmo, " +
-        "Máx ${dia.temperaturaMaxC.roundToInt()}°C, Mín ${dia.temperaturaMinC.roundToInt()}°C, " +
+        "Mín ${dia.temperaturaMinC.roundToInt()}°C, Máx ${dia.temperaturaMaxC.roundToInt()}°C, " +
         "Chuva ${dia.probChuvaPercent}%, Vento ${dia.velocidadeMaxVentoKmh.roundToInt()} km/h"
 
     val cardColors = if (dia.eHoje) {
@@ -138,16 +144,16 @@ fun DayCard(
             Column(horizontalAlignment = Alignment.End) {
                 Row {
                     Text(
+                        text = "${dia.temperaturaMinC.roundToInt()}°",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = WeatherColors.TempMin
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
                         text = "${dia.temperaturaMaxC.roundToInt()}°",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = WeatherColors.TempMax
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "${dia.temperaturaMinC.roundToInt()}°",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WeatherColors.TempMin
                     )
                 }
                 Row(

@@ -13,6 +13,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -111,7 +112,7 @@ class SearchViewModelTest {
         coEvery { buscaRepository.obterHistorico() } returns emptyList()
 
         var eventoRecebido: CidadeSugestao? = null
-        val job = kotlinx.coroutines.launch {
+        val job = launch {
             eventoRecebido = viewModel.cidadeSelecionadaEvent.first()
         }
 
